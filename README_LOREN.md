@@ -1841,3 +1841,33 @@ uv run playground/open_duck_mini_v2/runner.py --env joystick ... (您的其他�
 
 **總結**：
 您可以將這個過程理解為：一個大學畢業生（A 模型）去讀研究所。他不會忘記自己學過的所有基礎數學和物理（通用知識），而是在這個基礎上，去學習和適應一個更專業、更困難的新領域（崎嶇地形）。TensorBoard 上那條再次爬升的 `eval/episode_reward` 曲線，就是他正在努力撰寫他的碩士論文的證明。
+
+
+#### 訓練模型用的程式碼，在哪裡可以看到 Runtime內AI決策速度 POLICY_FREQ 設定為 50Hz(每秒50次)相關的程式碼?
+
+您好！在您提供的訓練用程式碼中，`POLICY_FREQ` 這個變數不是以同樣的名稱直接設定的，而是透過設定 **控制時間步長 (control time step)** 來間接定義。這個設定可以在 `playground/open_duck_mini_v2/joystick.py` 這個檔案中找到。
+
+在 `joystick.py` 檔案中，有一個 `default_config()` 函式，其中定義了訓練環境的各項參數：
+
+```python
+# In file: playground/open_duck_mini_v2/joystick.py
+
+def default_config() -> config_dict.ConfigDict:
+    return config_dict.create(
+        ctrl_dt=0.02,
+        sim_dt=0.002,
+        episode_length=1000,
+        # ... other parameters
+    )
+```
+
+這裡的關鍵參數是 `ctrl_dt=0.02`。
+
+  * **`ctrl_dt`** 代表 "control delta time"，也就是 AI 決策（Policy）更新一次指令的間隔時間。
+  * 決策頻率 (Hz) 是時間間隔的倒數。
+
+因此，我們可以計算出決策頻率：
+
+**頻率 = 1 / `ctrl_dt` = 1 / 0.02 = 50 Hz**
+
+這個 `ctrl_dt` 在訓練環境中的作用，就等同於您在實際執行檔 (`v2_rl_walk_mujoco.py`) 中看到的 `POLICY_FREQ`，兩者都確保了 AI 模型是以每秒 50 次的頻率來進行思考和決策的。
